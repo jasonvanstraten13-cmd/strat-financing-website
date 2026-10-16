@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Strat Finances</title>
+<meta name="description" content="Accounting for South African small businesses: invoices, bank reconciliation and VAT201 figures, in rand.">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#f6f7f4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a110f" media="(prefers-color-scheme: dark)">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Strat Finances">
+<meta property="og:description" content="Accounting for South African small businesses: invoices, bank reconciliation and VAT201 figures, in rand.">
+<meta name="twitter:card" content="summary">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: a ledger read top to bottom. Thesis and a live reconciliation, then the three jobs
+     (get paid, reconcile, file VAT), the rest of the toolkit, switching, pricing, questions. */
+  :root {
+    --bg: #f6f7f4;
+    --surface: #ffffff;
+    --surface-2: #eef1ec;
+    --ink: #0d1a16;
+    --muted: #5a6762;
+    --faint: #8a9690;
+    --line: rgba(13, 26, 22, 0.09);
+    --accent: #176b55;
+    --accent-hover: #12594a;
+    --accent-ink: #ffffff;
+    --accent-soft: #e4f0ea;
+    --gold: #a9863a;
+    --warn: #9a5b12;
+    --warn-soft: #fbefdd;
+    --shadow: 0 0 0 1px var(--line), 0 1px 2px rgba(13, 26, 22, 0.04), 0 12px 32px -16px rgba(13, 26, 22, 0.18);
+    --shadow-lg: 0 0 0 1px var(--line), 0 2px 4px rgba(13, 26, 22, 0.04), 0 32px 64px -32px rgba(13, 26, 22, 0.32);
+    --nav: rgba(246, 247, 244, 0.72);
+
+    --font: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+    /* Motion tokens, from Emil Kowalski's design engineering standards. */
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    --press: 160ms;
+
+    --max: 1120px;
+    --gutter-l: max(20px, env(safe-area-inset-left, 0px));
+    --gutter-r: max(20px, env(safe-area-inset-right, 0px));
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0a110f; --surface: #111a17; --surface-2: #16211d; --ink: #e6eeea; --muted: #97a59f; --faint: #6d7b75;
+      --line: rgba(230, 238, 234, 0.09); --accent: #3cb48b; --accent-hover: #52c49c; --accent-ink: #04130d; --accent-soft: rgba(60, 180, 139, 0.13);
+      --gold: #d4b062; --warn: #e3a556; --warn-soft: rgba(227, 165, 86, 0.12);
+      --shadow: 0 0 0 1px var(--line), 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px -16px rgba(0, 0, 0, 0.6);
+      --shadow-lg: 0 0 0 1px var(--line), 0 2px 4px rgba(0, 0, 0, 0.3), 0 32px 64px -32px rgba(0, 0, 0, 0.8);
+      --nav: rgba(10, 17, 15, 0.7);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0a110f; --surface: #111a17; --surface-2: #16211d; --ink: #e6eeea; --muted: #97a59f; --faint: #6d7b75;
+    --line: rgba(230, 238, 234, 0.09); --accent: #3cb48b; --accent-hover: #52c49c; --accent-ink: #04130d; --accent-soft: rgba(60, 180, 139, 0.13);
+    --gold: #d4b062; --warn: #e3a556; --warn-soft: rgba(227, 165, 86, 0.12);
+    --shadow: 0 0 0 1px var(--line), 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px -16px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 0 0 1px var(--line), 0 2px 4px rgba(0, 0, 0, 0.3), 0 32px 64px -32px rgba(0, 0, 0, 0.8);
+    --nav: rgba(10, 17, 15, 0.7);
+    color-scheme: dark;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 84px; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 400 1rem/1.6 var(--font); letter-spacing: -0.006em;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 60; background: var(--bg); }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+  .wrap { max-width: var(--max); margin: 0 auto; padding-left: var(--gutter-l); padding-right: var(--gutter-r); }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+  /* Type scale: tracking tightens as size grows; body stays near zero. */
+  h1, h2, h3 { margin: 0; color: var(--ink); text-wrap: balance; }
+  h1 { font-size: clamp(2.5rem, 5.6vw, 4.25rem); line-height: 1.02; letter-spacing: -0.042em; font-weight: 600; }
+  h2 { font-size: clamp(1.85rem, 3.4vw, 2.75rem); line-height: 1.08; letter-spacing: -0.034em; font-weight: 600; }
+  h3 { font-size: 1.0625rem; line-height: 1.35; letter-spacing: -0.014em; font-weight: 600; }
+  p { margin: 0; text-wrap: pretty; }
+  .lede { font-size: clamp(1.0625rem, 1.5vw, 1.1875rem); line-height: 1.55; color: var(--muted); max-width: 34em; }
+  .eyebrow { font-size: 0.75rem; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--accent); }
+
+  /* Buttons: press feedback on every pressable element; hover colour only where hover is real. */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px;
+    border: 0; border-radius: 10px; font: 500 0.9375rem/1 var(--font); letter-spacing: -0.01em; text-decoration: none; cursor: pointer;
+    transition: transform var(--press) var(--ease-out), background-color 150ms ease, box-shadow 150ms ease, color 150ms ease;
+    -webkit-tap-highlight-color: transparent; white-space: nowrap;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 1px 2px rgba(13, 26, 22, 0.18); }
+  .btn-ghost { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--line), 0 1px 2px rgba(13, 26, 22, 0.05); }
+  .btn-sm { min-height: 36px; padding: 0 14px; font-size: 0.875rem; border-radius: 9px; }
+  @media (hover: hover) and (pointer: fine) {
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-ghost:hover { background: var(--surface-2); }
+    .nav-links a:hover { color: var(--ink); }
+    .foot a:hover { color: var(--ink); }
+  }
+
+  /* Navigation: a translucent layer; the shadow only appears once content scrolls under it. */
+  .nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50; background: var(--nav); backdrop-filter: blur(16px) saturate(170%); -webkit-backdrop-filter: blur(16px) saturate(170%); }
+  .nav::after { content: ""; position: absolute; inset: auto 0 -16px; height: 16px; pointer-events: none; background: linear-gradient(var(--line), transparent); opacity: 0; transition: opacity 200ms ease; }
+  .nav[data-scrolled]::after { opacity: 1; }
+  .nav-inner { display: flex; align-items: center; gap: 24px; height: 64px; }
+  .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 600; letter-spacing: -0.03em; font-size: 1.0625rem; flex: none; }
+  .brand img { width: 30px; height: 30px; flex: none; }
+  .nav-links { display: flex; gap: 22px; margin: 0 auto; padding: 0; list-style: none; font-size: 0.9rem; color: var(--muted); }
+  .nav-links a { text-decoration: none; transition: color 150ms ease; }
+  .nav-cta { display: flex; gap: 8px; align-items: center; }
+  @media (max-width: 860px) { .nav-links, .nav-signin { display: none; } .nav-cta { margin-left: auto; } }
+  @supports not (backdrop-filter: blur(1px)) { .nav { background: var(--bg); } }
+  @media (prefers-reduced-transparency: reduce) { .nav { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; } }
+
+  /* Hero */
+  .hero { padding-block: clamp(48px, 8vw, 96px) clamp(56px, 8vw, 104px); }
+  .hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(32px, 5vw, 72px); align-items: center; }
+  .hero-copy { display: grid; gap: 22px; justify-items: start; min-width: 0; }
+  .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+  .hero-note { font-size: 0.8125rem; color: var(--faint); }
+  @media (max-width: 920px) { .hero-grid { grid-template-columns: minmax(0, 1fr); } }
+
+  /* Load sequence: short stagger, decorative only, never blocks interaction. */
+  .rise { animation: rise 420ms var(--ease-out) both; }
+  .rise:nth-child(2) { animation-delay: 50ms; } .rise:nth-child(3) { animation-delay: 100ms; }
+  .rise:nth-child(4) { animation-delay: 150ms; } .rise:nth-child(5) { animation-delay: 200ms; }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+
+  /* Product windows */
+  .window { background: var(--surface); border-radius: 16px; box-shadow: var(--shadow-lg); overflow: hidden; min-width: 0; }
+  .window-bar { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); font-size: 0.8125rem; color: var(--muted); }
+  .dots { display: flex; gap: 6px; flex: none; } .dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--line); display: block; }
+  .window-body { padding: 18px; display: grid; gap: 14px; }
+
+  .pill { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border-radius: 999px; font-size: 0.75rem; font-weight: 500; white-space: nowrap; flex: none; }
+  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .pill-warn { background: var(--warn-soft); color: var(--warn); }
+  .pill-ok { background: var(--accent-soft); color: var(--accent); }
+
+  /* Reconciliation demo */
+  .demo-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 14px; border-radius: 12px; background: var(--surface-2); }
+  .demo-line .desc { font-weight: 600; letter-spacing: -0.01em; min-width: 0; overflow-wrap: anywhere; }
+  .demo-line .meta { font-size: 0.8125rem; color: var(--muted); }
+  .demo-line .amt { font-size: 1.0625rem; font-weight: 500; color: var(--accent); text-align: right; }
+  .status { position: relative; display: grid; justify-items: end; }
+  .status .pill { grid-area: 1 / 1; transition: opacity 200ms ease, filter 200ms ease; }
+  .status .pill-ok { opacity: 0; filter: blur(2px); }
+  .demo[data-done] .status .pill-warn { opacity: 0; filter: blur(2px); }
+  .demo[data-done] .status .pill-ok { opacity: 1; filter: blur(0); }
+
+  .alloc-head { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--faint); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500; }
+  .allocs { display: grid; gap: 8px; }
+  .alloc { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 11px 12px; border-radius: 10px; box-shadow: 0 0 0 1px var(--line); font-size: 0.875rem;
+    transition: opacity 300ms var(--ease-out), transform 300ms var(--ease-out); }
+  .alloc .doc { font-weight: 600; } .alloc .who { color: var(--muted); }
+  .alloc .who small { display: block; font-size: 0.75rem; color: var(--faint); }
+  .alloc .tick { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; flex: none; }
+  .alloc .tick svg { width: 10px; height: 10px; }
+  .demo:not([data-step]) .alloc, .demo[data-step="0"] .alloc { opacity: 0; transform: translateY(6px); }
+  .demo[data-step="1"] .alloc:nth-child(2) { opacity: 0; transform: translateY(6px); }
+
+  .meter { display: grid; gap: 8px; }
+  .meter-track { position: relative; height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+  .meter-fill { position: absolute; inset: 0; background: var(--accent); border-radius: inherit; transform-origin: left center; transform: scaleX(0); transition: transform 700ms var(--ease-in-out); }
+  .demo[data-step="1"] .meter-fill { transform: scaleX(0.338); }
+  .demo[data-step="2"] .meter-fill { transform: scaleX(1); }
+  .meter-text { display: flex; justify-content: space-between; gap: 12px; font-size: 0.8125rem; color: var(--muted); flex-wrap: wrap; }
+  .demo-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .demo-hint { font-size: 0.8125rem; color: var(--faint); transition: opacity 200ms ease; }
+  .demo[data-done] .demo-hint { opacity: 0; }
+
+  /* Toast: transitions (not keyframes) so a fast replay retargets cleanly. Enters and leaves from the bottom. */
+  .demo-stage { position: relative; }
+  .toast { position: absolute; left: 50%; bottom: 14px; display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 10px; background: var(--ink); color: var(--bg); font-size: 0.8125rem; font-weight: 500; white-space: nowrap; box-shadow: 0 12px 24px -12px rgba(0, 0, 0, 0.4);
+    transform: translate(-50%, calc(100% + 18px)); opacity: 0; transition: transform 400ms ease, opacity 400ms ease; pointer-events: none; }
+  .demo[data-done] .toast { transform: translate(-50%, 0); opacity: 1; }
+
+  /* Trust strip */
+  .strip { padding-block: 22px; border-block: 1px solid var(--line); }
+  .strip-inner { display: flex; flex-wrap: wrap; gap: 10px 28px; justify-content: center; align-items: center; font-size: 0.875rem; color: var(--muted); text-align: center; }
+  .strip strong { color: var(--ink); font-weight: 500; }
+  .strip .sep { width: 4px; height: 4px; border-radius: 50%; background: var(--gold); flex: none; }
+
+  /* Feature chapters */
+  .chapter { padding-block: clamp(72px, 10vw, 128px) 0; }
+  .chapter-grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(32px, 5vw, 72px); align-items: center; }
+  .chapter-grid.flip > :first-child { order: 2; }
+  .chapter-copy { display: grid; gap: 18px; min-width: 0; align-content: start; }
+  .ticks { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 12px; }
+  .ticks li { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 10px; color: var(--muted); font-size: 0.9375rem; line-height: 1.5; }
+  .ticks li strong { color: var(--ink); font-weight: 500; }
+  .ticks svg { width: 20px; height: 20px; color: var(--accent); margin-top: 1px; }
+  @media (max-width: 920px) { .chapter-grid { grid-template-columns: minmax(0, 1fr); } .chapter-grid.flip > :first-child { order: 0; } }
+
+  /* Scroll reveal: marketing surfaces only, once, and only for windows that start below the fold. */
+  /* The open state's negative insets leave room for the window's shadow, so revealing never clips it. */
+  .reveal[data-hidden] { clip-path: inset(0 0 100% 0); }
+  .reveal[data-revealing] { clip-path: inset(-48px -48px -96px -48px); transition: clip-path 700ms var(--ease-in-out); }
+
+  /* Invoice mock */
+  .inv-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+  .inv-title { font-size: 1.375rem; letter-spacing: -0.03em; font-weight: 600; }
+  .inv-meta { font-size: 0.8125rem; color: var(--muted); text-align: right; }
+  .table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  .table th { text-align: left; font-weight: 500; font-size: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--faint); padding: 0 0 8px; border-bottom: 1px solid var(--line); }
+  .table td { padding: 10px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .table .r { text-align: right; padding-left: 12px; white-space: nowrap; }
+  .table tr:last-child td { border-bottom: 0; }
+  .totals { display: grid; gap: 6px; margin-left: auto; width: min(260px, 100%); font-size: 0.875rem; }
+  .totals div { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); }
+  .totals .grand { color: var(--ink); font-weight: 600; font-size: 1rem; padding-top: 8px; border-top: 1px solid var(--line); }
+  .check { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); font-size: 0.8125rem; font-weight: 500; }
+  .send-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .fake-btn { display: inline-flex; align-items: center; height: 34px; padding: 0 12px; border-radius: 8px; font-size: 0.8125rem; font-weight: 500; box-shadow: 0 0 0 1px var(--line); color: var(--ink); }
+  .fake-btn.primary { background: var(--accent); color: var(--accent-ink); box-shadow: none; }
+
+  /* Match list mock */
+  .match { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px; border-radius: 10px; box-shadow: 0 0 0 1px var(--line); font-size: 0.875rem; }
+  .match.on { box-shadow: 0 0 0 1.5px var(--accent); background: var(--accent-soft); }
+  .radio { width: 16px; height: 16px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--faint); }
+  .match.on .radio { box-shadow: inset 0 0 0 5px var(--accent); }
+  .match small { display: block; color: var(--muted); font-size: 0.75rem; margin-top: 2px; }
+
+  /* VAT201 mock */
+  .vat-field { width: 44px; padding-right: 12px; color: var(--faint); }
+  .table th:first-child { padding-right: 12px; }
+  .vat-total td { font-weight: 600; color: var(--ink); }
+  .lock { display: flex; gap: 10px; align-items: center; font-size: 0.8125rem; color: var(--muted); }
+  .lock svg { width: 16px; height: 16px; color: var(--gold); flex: none; }
+
+  /* Toolkit grid */
+  .toolkit { padding-block: clamp(72px, 10vw, 128px) 0; }
+  .toolkit-head { display: grid; gap: 14px; max-width: 40em; margin-bottom: 40px; }
+  .tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--line); border-radius: 16px; overflow: hidden; box-shadow: 0 0 0 1px var(--line); }
+  .tool { background: var(--surface); padding: 24px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+  .tool svg { width: 22px; height: 22px; color: var(--accent); margin-bottom: 6px; }
+  .tool p { font-size: 0.9rem; color: var(--muted); line-height: 1.55; }
+  @media (max-width: 920px) { .tools { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .tools { grid-template-columns: minmax(0, 1fr); } }
+
+  /* Switching */
+  .switch { padding-block: clamp(72px, 10vw, 128px) 0; }
+  .switch-card { align-items: start; display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: clamp(28px, 4vw, 56px); padding: clamp(28px, 4vw, 48px); border-radius: 20px; background: var(--surface); box-shadow: var(--shadow); }
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; counter-reset: step; }
+  .steps li { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--line); counter-increment: step; }
+  .steps li:last-child { border-bottom: 0; }
+  .steps li::before { content: counter(step); width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font: 500 0.8125rem/1 var(--mono); }
+  .steps p { color: var(--muted); font-size: 0.9rem; margin-top: 3px; }
+  @media (max-width: 860px) { .switch-card { grid-template-columns: minmax(0, 1fr); } }
+
+  /* Pricing */
+  .pricing { padding-block: clamp(72px, 10vw, 128px) 0; }
+  .pricing-head { display: grid; gap: 14px; justify-items: center; text-align: center; margin-bottom: 36px; }
+  .seg { position: relative; display: inline-grid; grid-template-columns: 1fr 1fr; padding: 4px; border-radius: 12px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); margin-top: 8px; }
+  .seg button { position: relative; z-index: 1; border: 0; background: none; font: 500 0.875rem/1 var(--font); color: var(--muted); height: 36px; padding: 0 16px; border-radius: 9px; cursor: pointer; transition: color 200ms ease, transform var(--press) var(--ease-out); white-space: nowrap; }
+  .seg button:active { transform: scale(0.97); }
+  .seg button[aria-pressed="true"] { color: var(--ink); }
+  .seg-pill { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); border-radius: 9px; background: var(--surface); box-shadow: 0 1px 2px rgba(13, 26, 22, 0.08), 0 0 0 1px var(--line); transition: transform 250ms var(--ease-in-out); }
+  .seg[data-period="annual"] .seg-pill { transform: translateX(100%); }
+  .save { color: var(--accent); font-size: 0.75rem; margin-left: 6px; }
+  .plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; max-width: 860px; margin: 0 auto; }
+  .plan { display: grid; gap: 20px; align-content: start; padding: 28px; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow); min-width: 0; }
+  .plan.featured { box-shadow: 0 0 0 1.5px var(--accent), 0 24px 48px -28px rgba(23, 107, 85, 0.45); }
+  .plan-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .plan h3 { font-size: 1.125rem; }
+  .plan .for { color: var(--muted); font-size: 0.9rem; margin-top: -12px; }
+  .price { display: flex; align-items: baseline; gap: 6px; }
+  .price .amount { font-size: 2.75rem; font-weight: 600; letter-spacing: -0.045em; line-height: 1; transition: opacity 200ms ease, filter 200ms ease; }
+  .price .per { color: var(--muted); font-size: 0.875rem; }
+  .plans[data-swapping] .amount, .plans[data-swapping] .billed { opacity: 0.25; filter: blur(2px); }
+  .billed { font-size: 0.8125rem; color: var(--faint); margin-top: -12px; transition: opacity 200ms ease, filter 200ms ease; }
+  .plan .btn { width: 100%; }
+  .plan ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; font-size: 0.9rem; color: var(--muted); }
+  .plan li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; }
+  .plan li svg { width: 18px; height: 18px; color: var(--accent); margin-top: 2px; }
+  .plans-note { text-align: center; color: var(--faint); font-size: 0.8125rem; margin-top: 18px; }
+  @media (max-width: 720px) { .plans { grid-template-columns: minmax(0, 1fr); } }
+
+  /* FAQ */
+  .faq { padding-block: clamp(72px, 10vw, 128px) 0; }
+  .faq-grid { align-items: start; display: grid; grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr); gap: clamp(28px, 5vw, 72px); }
+  .faq-list { display: grid; }
+  details { border-bottom: 1px solid var(--line); }
+  details:first-child { border-top: 1px solid var(--line); }
+  summary { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px 0; cursor: pointer; list-style: none; font-weight: 500; letter-spacing: -0.012em; }
+  summary::-webkit-details-marker { display: none; }
+  summary .plus { position: relative; width: 14px; height: 14px; flex: none; transition: transform 200ms var(--ease-out); }
+  summary .plus::before, summary .plus::after { content: ""; position: absolute; inset: 6px 0 auto; height: 1.5px; border-radius: 1px; background: var(--muted); }
+  summary .plus::after { transform: rotate(90deg); }
+  details[open] summary .plus { transform: rotate(45deg); }
+  .answer { padding: 0 0 20px; color: var(--muted); font-size: 0.9375rem; max-width: 40em; }
+  details[open] .answer { animation: answer 220ms var(--ease-out); }
+  @keyframes answer { from { opacity: 0; transform: translateY(-4px); } }
+  @media (max-width: 860px) { .faq-grid { grid-template-columns: minmax(0, 1fr); } }
+
+  /* Closing */
+  .closing { padding-block: clamp(72px, 10vw, 128px); }
+  .closing-card { position: relative; overflow: hidden; display: grid; gap: 20px; justify-items: center; text-align: center; padding: clamp(40px, 7vw, 80px) clamp(20px, 5vw, 64px); border-radius: 24px; background: var(--accent); color: var(--accent-ink); }
+  .closing-card h2 { color: inherit; max-width: 16em; }
+  .closing-card p { opacity: 0.82; max-width: 32em; }
+  .closing-card::before { content: ""; position: absolute; inset: auto -20% -60% 40%; height: 120%; background: radial-gradient(closest-side, rgba(255, 255, 255, 0.14), transparent); pointer-events: none; }
+  .btn-invert { background: var(--accent-ink); color: var(--accent); }
+  @media (hover: hover) and (pointer: fine) { .btn-invert:hover { background: var(--surface-2); color: var(--accent); } }
+
+  .foot { padding-block: 32px 40px; border-top: 1px solid var(--line); font-size: 0.8125rem; color: var(--muted); }
+  .foot-inner { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: center; justify-content: space-between; }
+  .foot-links { display: flex; flex-wrap: wrap; gap: 8px 22px; }
+  .foot a { text-decoration: none; transition: color 150ms ease; }
+
+  /* Reduced motion: keep fades that aid comprehension, drop movement. */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .rise { animation: fade 200ms ease both; }
+    @keyframes fade { from { opacity: 0; } }
+    .alloc, .demo:not([data-step]) .alloc, .demo[data-step="0"] .alloc, .demo[data-step="1"] .alloc:nth-child(2) { transform: none; }
+    .meter-fill { transition: transform 1ms linear; }
+    .toast { transition: opacity 200ms ease; transform: translate(-50%, 0); }
+    .reveal, .reveal[data-hidden] { clip-path: none; transition: none; }
+    .seg-pill { transition: none; }
+    details[open] .answer { animation: fade 200ms ease; }
+    .btn:active, .seg button:active { transform: none; }
+  }
+</style>
+
+</head>
+<body>
+<header class="nav" id="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="#top" aria-label="Strat Finances home"><img src="assets/mark.png" alt="" width="30" height="30">Strat Finances</a>
+    <ul class="nav-links">
+      <li><a href="#invoicing">Invoicing</a></li>
+      <li><a href="#banking">Banking</a></li>
+      <li><a href="#vat">VAT</a></li>
+      <li><a href="#switching">Switching</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+    <div class="nav-cta">
+      <a class="btn btn-ghost btn-sm nav-signin" href="#" data-link="signin">Sign in</a>
+      <a class="btn btn-primary btn-sm" href="#pricing" data-link="signup">Start free trial</a>
+    </div>
+  </div>
+</header>
+<span id="nav-sentinel" aria-hidden="true"></span>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow rise">Accounting for South African small business</p>
+        <h1 class="rise">Your books, in rand, with VAT built in.</h1>
+        <p class="lede rise">Strat Finances does your invoicing, bank reconciliation and VAT201 figures in one place. It reads your bank's CSV, sends invoices on WhatsApp, and knows your financial year ends in February.</p>
+        <div class="hero-actions rise">
+          <a class="btn btn-primary" href="#pricing" data-link="signup">Start free trial</a>
+          <a class="btn btn-ghost" href="#banking">See how banking works</a>
+        </div>
+        <p class="hero-note rise">Prices in rand, excluding VAT. Your accountant signs in free.</p>
+      </div>
+
+      <div class="window demo rise" id="demo" aria-label="Example: reconciling a bank deposit against two invoices">
+        <div class="window-bar"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>Banking · Reconcile</span></div>
+        <div class="demo-stage">
+          <div class="window-body">
+            <div class="demo-line">
+              <span class="desc">ACME DEPOSIT</span>
+              <span class="status"><span class="pill pill-warn">Needs review</span><span class="pill pill-ok">Reconciled</span></span>
+              <span class="meta">16 Oct 2026 · FNB statement</span>
+              <span class="amt num">+R 3 400,00</span>
+            </div>
+            <div class="alloc-head"><span>Received for</span><span>Amount</span></div>
+            <div class="allocs">
+              <div class="alloc">
+                <span class="tick" aria-hidden="true"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6.2 5 8.5l4.5-5"/></svg></span>
+                <span class="who"><span class="doc">INV-0041</span> · Acme Studio<small>Paid in full</small></span>
+                <span class="num">R 1 150,00</span>
+              </div>
+              <div class="alloc">
+                <span class="tick" aria-hidden="true"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6.2 5 8.5l4.5-5"/></svg></span>
+                <span class="who"><span class="doc">INV-0042</span> · Acme Studio<small>R 50,00 still owing</small></span>
+                <span class="num">R 2 250,00</span>
+              </div>
+            </div>
+            <div class="meter">
+              <div class="meter-track"><span class="meter-fill"></span></div>
+              <div class="meter-text"><span id="meter-label">Allocated</span><span class="num" id="meter-amount">R 0,00 of R 3 400,00</span></div>
+            </div>
+            <div class="demo-foot">
+              <span class="demo-hint" id="demo-hint">One deposit, two invoices.</span>
+              <button class="btn btn-primary btn-sm" type="button" id="demo-action">Reconcile</button>
+            </div>
+          </div>
+          <div class="toast" role="status" aria-live="polite"><svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2.5 6.2 5 8.5l4.5-5"/></svg>Transaction reconciled.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="strip">
+    <div class="wrap strip-inner">
+      <span>Reads statements from <strong>FNB</strong>, <strong>ABSA</strong>, <strong>Standard Bank</strong>, <strong>Nedbank</strong> and <strong>Capitec</strong></span>
+      <span class="sep" aria-hidden="true"></span>
+      <span>Pay-now links for <strong>Yoco</strong>, <strong>PayFast</strong>, <strong>SnapScan</strong> and <strong>Ozow</strong></span>
+    </div>
+  </div>
+
+  <section class="chapter" id="invoicing">
+    <div class="wrap chapter-grid">
+      <div class="chapter-copy">
+        <p class="eyebrow">Invoicing</p>
+        <h2>Send the invoice before you've left the client.</h2>
+        <p class="lede">Quotes turn into invoices in one step. Every invoice is checked against what SARS expects on a tax invoice before it goes out.</p>
+        <ul class="ticks">
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5 10.5 3 3 7-7"/></svg><span><strong>Email or WhatsApp.</strong> Customers get a secure link to view, download and pay.</span></li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5 10.5 3 3 7-7"/></svg><span><strong>A Pay now button</strong> on every invoice, from your Yoco, PayFast, SnapScan or Ozow page.</span></li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5 10.5 3 3 7-7"/></svg><span><strong>Overdue reminders</strong> go out once a week until the invoice is paid.</span></li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5 10.5 3 3 7-7"/></svg><span><strong>Monthly services</strong> are flagged on their billing day and billed as one invoice per client.</span></li>
+        </ul>
+      </div>
+      <div class="window reveal">
+        <div class="window-bar"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>INV-0042 · Acme Studio</span></div>
+        <div class="window-body">
+          <div class="inv-head">
+            <div><div class="inv-title">Tax Invoice</div><div class="hero-note">VAT no. 4123456789</div></div>
+            <div class="inv-meta"><div>INV-0042 · 16 Oct 2026</div><div>Due 15 Nov 2026</div></div>
+          </div>
+          <table class="table">
+            <thead><tr><th>Description</th><th class="r">VAT</th><th class="r">Amount</th></tr></thead>
+            <tbody>
+              <tr><td>Brand identity, phase 2</td><td class="r">15%</td><td class="r num">R 1 500,00</td></tr>
+              <tr><td>Website hosting, October</td><td class="r">15%</td><td class="r num">R 500,00</td></tr>
+            </tbody>
+          </table>
+          <div class="totals">
+            <div><span>Subtotal</span><span class="num">R 2 000,00</span></div>
+            <div><span>VAT (15%)</span><span class="num">R 300,00</span></div>
+            <div class="grand"><span>Amount due</span><span class="num">R 2 300,00</span></div>
+          </div>
+          <div class="check"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m5 10.5 3 3 7-7"/></svg>Ready to send: your VAT number and address are on it.</div>
+          <div class="send-row"><span class="fake-btn primary">Send email</span><span class="fake-btn">WhatsApp</span><span class="fake-btn">Copy customer link</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="chapter" id="banking">
+    <div class="wrap chapter-grid flip">
+      <div class="chapter-copy">
+        <p class="eyebrow">Banking</p>
+        <h2>Reconcile without counting anything twice.</h2>
+        <p class="lede">Import the CSV from your online banking. Strat Finances skips lines you've already imported and suggests a match for the rest.</p>
+        <ul class="ticks">
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5 10.5 3 3 7-7"/></svg><span><strong>Already recorded comes first.</strong> A fuel slip you entered last week is matched to its bank line. It isn't booked again.</span></li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5 10.5 3 3 7-7"/></svg><span><strong>Split one deposit</strong> across several invoices, with the rest on an account such as bank fees.</span></li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5 10.5 3 3 7-7"/></svg><span><strong>VAT on coded lines,</strong> so the input VAT on card purchases and fees is claimed.</span></li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5 10.5 3 3 7-7"/></svg><span><strong>Unreconcile</strong> undoes everything a match did, if you picked the wrong one.</span></li>
+        </ul>
+      </div>
+      <div class="window reveal">
+        <div class="window-bar"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>ENGEN FUEL · −R 500,00</span></div>
+        <div class="window-body">
+          <div class="alloc-head"><span>Suggested matches</span></div>
+          <div class="match on"><span class="radio" aria-hidden="true"></span><span><strong>Already recorded · Expense · Fuel</strong><small>14 Oct 2026 · paid from the business account</small></span><span class="num">R 500,00</span></div>
+          <div class="match"><span class="radio" aria-hidden="true"></span><span><strong>BILL-0017 · Engen Rosebank</strong><small>Due 31 Oct 2026</small></span><span class="num">R 500,00</span></div>
+          <div class="match"><span class="radio" aria-hidden="true"></span><span><strong>None of these</strong><small>Split the line or code it to an account</small></span><span></span></div>
+          <div class="demo-foot"><span class="demo-hint">Matching links the two. Nothing new is posted.</span><span class="fake-btn primary">Reconcile</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="chapter" id="vat">
+    <div class="wrap chapter-grid">
+      <div class="chapter-copy">
+        <p class="eyebrow">VAT</p>
+        <h2>VAT201 figures you can type straight into eFiling.</h2>
+        <p class="lede">Every VAT amount is recorded in the period it belongs to. Once you've filed, lock the period, and the return you submitted stays exactly as it was.</p>
+        <ul class="ticks">
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5 10.5 3 3 7-7"/></svg><span><strong>Standard, zero-rated, exempt and no VAT</strong> on every line, at 15%.</span></li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5 10.5 3 3 7-7"/></svg><span><strong>Voids and credit notes</strong> count in the period they happen, like they should.</span></li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5 10.5 3 3 7-7"/></svg><span><strong>Equipment purchases</strong> go to field 14 as capital goods.</span></li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5 10.5 3 3 7-7"/></svg><span><strong>Not VAT registered?</strong> New lines default to No VAT, and documents say Invoice, not Tax Invoice.</span></li>
+        </ul>
+      </div>
+      <div class="window reveal">
+        <div class="window-bar"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>VAT201 · Sep–Oct 2026</span></div>
+        <div class="window-body">
+          <table class="table">
+            <thead><tr><th>Field</th><th>Description</th><th class="r">Amount</th></tr></thead>
+            <tbody>
+              <tr><td class="vat-field num">1</td><td>Standard-rated supplies, incl. VAT</td><td class="r num">R 115 000,00</td></tr>
+              <tr><td class="vat-field num">4</td><td>Output tax</td><td class="r num">R 15 000,00</td></tr>
+              <tr><td class="vat-field num">14</td><td>Input tax: capital goods</td><td class="r num">R 1 500,00</td></tr>
+              <tr><td class="vat-field num">15</td><td>Input tax: other goods and services</td><td class="r num">R 6 240,00</td></tr>
+              <tr><td class="vat-field num">19</td><td>Total input tax</td><td class="r num">R 7 740,00</td></tr>
+              <tr class="vat-total"><td class="vat-field num">20</td><td>VAT payable to SARS</td><td class="r num">R 7 260,00</td></tr>
+            </tbody>
+          </table>
+          <div class="lock"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>Books locked up to 31 Aug 2026, after the last filing.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="toolkit" id="features">
+    <div class="wrap">
+      <div class="toolkit-head">
+        <p class="eyebrow">Everything else</p>
+        <h2>What your accountant asks for, already done.</h2>
+        <p class="lede">Real double-entry books underneath, so the reports agree with each other and with the bank.</p>
+      </div>
+      <div class="tools">
+        <div class="tool"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><h3>Reports for year-end</h3><p>Profit and loss, balance sheet with retained earnings, trial balance and a general ledger for any period.</p></div>
+        <div class="tool"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M7 3h10l4 4v14H3V3h4"/><path d="M8 11h8M8 15h8M8 7h4"/></svg><h3>Statements and ageing</h3><p>Customer and supplier statements with a running balance. Who owes you what, by 30, 60 and 90 days.</p></div>
+        <div class="tool"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4M3 17l9 4 9-4"/></svg><h3>Stock at average cost</h3><p>Stock goes down when you invoice and up when you bill. Cost of sales posts itself, and overselling is blocked.</p></div>
+        <div class="tool"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg><h3>Expense claims</h3><p>Snap the slip, record what was paid personally, and repay it later or match the bank line.</p></div>
+        <div class="tool"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg><h3>Cash-flow forecast</h3><p>Your expected bank balance for the next 12 weeks, from invoices, bills, claims and monthly services.</p></div>
+        <div class="tool"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 20a6.5 6.5 0 0 0-3-5.5"/></svg><h3>Logins and roles</h3><p>Owner, accountant and view-only access. Every change and sign-in is in the activity log.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="switch" id="switching">
+    <div class="wrap">
+      <div class="switch-card">
+        <div class="chapter-copy">
+          <p class="eyebrow">Switching from Xero or another system</p>
+          <h2>Move over on a date you choose.</h2>
+          <p class="lede">You need two reports from your current system on the conversion date: the trial balance and your list of unpaid invoices and bills.</p>
+        </div>
+        <ol class="steps">
+          <li><div><h3>Pick a conversion date</h3><p>Month-end works best. The start of your financial year is cleanest.</p></div></li>
+          <li><div><h3>Enter your opening balances</h3><p>One journal for bank, equipment, loans and equity, straight from the trial balance.</p></div></li>
+          <li><div><h3>Add what's still owed</h3><p>Each unpaid invoice and bill goes in as an opening balance, so payments match against it.</p></div></li>
+          <li><div><h3>Add stock and lock the old period</h3><p>Enter opening stock per product, then lock everything before the conversion date.</p></div></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="pricing" id="pricing">
+    <div class="wrap">
+      <div class="pricing-head">
+        <p class="eyebrow">Pricing</p>
+        <h2>One price, in rand.</h2>
+        <p class="lede">Every plan has invoicing, banking and VAT201. Your accountant signs in free on both.</p>
+        <div class="seg" id="period" data-period="monthly" role="group" aria-label="Billing period">
+          <span class="seg-pill" aria-hidden="true"></span>
+          <button type="button" aria-pressed="true" data-period="monthly">Monthly</button>
+          <button type="button" aria-pressed="false" data-period="annual">Yearly<span class="save">2 months free</span></button>
+        </div>
+      </div>
+      <div class="plans" id="plans">
+        <article class="plan">
+          <div class="plan-top"><h3>Solo</h3></div>
+          <p class="for">For freelancers and one-person businesses.</p>
+          <div class="price"><span class="amount num" data-monthly="R149" data-annual="R124">R149</span><span class="per">/ month</span></div>
+          <p class="billed" data-monthly="Billed monthly. Cancel any time." data-annual="R1 490 billed once a year.">Billed monthly. Cancel any time.</p>
+          <a class="btn btn-ghost" href="#pricing" data-link="signup">Start free trial</a>
+          <ul>
+            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5 10.5 3 3 7-7"/></svg>1 user, plus your accountant</li>
+            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5 10.5 3 3 7-7"/></svg>Invoices, quotes and credit notes</li>
+            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5 10.5 3 3 7-7"/></svg>Bank import and reconciliation</li>
+            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5 10.5 3 3 7-7"/></svg>VAT201 figures and lock dates</li>
+            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5 10.5 3 3 7-7"/></svg>Email, WhatsApp and pay-now links</li>
+          </ul>
+        </article>
+        <article class="plan featured">
+          <div class="plan-top"><h3>Business</h3><span class="pill pill-ok">Recommended</span></div>
+          <p class="for">For businesses with staff, stock or recurring clients.</p>
+          <div class="price"><span class="amount num" data-monthly="R299" data-annual="R249">R299</span><span class="per">/ month</span></div>
+          <p class="billed" data-monthly="Billed monthly. Cancel any time." data-annual="R2 990 billed once a year.">Billed monthly. Cancel any time.</p>
+          <a class="btn btn-primary" href="#pricing" data-link="signup">Start free trial</a>
+          <ul>
+            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5 10.5 3 3 7-7"/></svg>Up to 5 users, plus your accountant</li>
+            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5 10.5 3 3 7-7"/></svg>Everything in Solo</li>
+            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5 10.5 3 3 7-7"/></svg>Stock, expense claims and monthly services</li>
+            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5 10.5 3 3 7-7"/></svg>Overdue reminders and cash-flow forecast</li>
+            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m5 10.5 3 3 7-7"/></svg>Weekly backup to your inbox</li>
+          </ul>
+        </article>
+      </div>
+      <p class="plans-note">Prices exclude VAT.</p>
+    </div>
+  </section>
+
+  <section class="faq" id="faq">
+    <div class="wrap faq-grid">
+      <div class="chapter-copy">
+        <p class="eyebrow">Questions</p>
+        <h2>Before you sign up.</h2>
+      </div>
+      <div class="faq-list">
+        <details><summary>Is Strat Finances approved by SARS?<span class="plus" aria-hidden="true"></span></summary><p class="answer">SARS doesn't approve accounting software. Strat Finances works out the figures for your VAT201, and you capture them on eFiling yourself. Check them with your tax practitioner before you file.</p></details>
+        <details><summary>Can my accountant work in my books?<span class="plus" aria-hidden="true"></span></summary><p class="answer">Yes. Add them with the accountant role at no charge. They can do everything except manage people, backups and the lock date. You can also add view-only users.</p></details>
+        <details><summary>Which banks does it work with?<span class="plus" aria-hidden="true"></span></summary><p class="answer">Any bank that lets you download a CSV statement with a date and an amount, or debit and credit columns. Common South African layouts, including Dr and Cr markers and amounts like 1 234,56, are read as they are.</p></details>
+        <details><summary>How is my data protected?<span class="plus" aria-hidden="true"></span></summary><p class="answer">Passwords are hashed, accounts lock for 15 minutes after five wrong attempts, and every change and sign-in is recorded in the activity log. You can download a full backup at any time and have one emailed to you every Monday.</p></details>
+        <details><summary>Can I take my data with me if I leave?<span class="plus" aria-hidden="true"></span></summary><p class="answer">Yes. Download a complete backup of your books, including attachments, and export your invoices as a CSV file.</p></details>
+        <details><summary>Does it do payroll?<span class="plus" aria-hidden="true"></span></summary><p class="answer">Not yet. Keep using your payroll provider and code the salary payments from your bank statement to the Salaries account.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="closing">
+    <div class="wrap">
+      <div class="closing-card">
+        <h2>Start with this month's invoices.</h2>
+        <p>Set up your business details, add a customer and send your first invoice. Bring the rest across when you're ready.</p>
+        <a class="btn btn-invert" href="#pricing" data-link="signup">Start free trial</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-inner">
+    <a class="brand" href="#top"><img src="assets/mark.png" alt="" width="24" height="24" style="width:24px;height:24px">Strat Finances</a>
+    <nav class="foot-links" aria-label="Footer">
+      <a href="#invoicing">Invoicing</a><a href="#banking">Banking</a><a href="#vat">VAT</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a>
+      <a href="https://www.stratstudios.co.za" target="_blank" rel="noopener">A Strat Studios product</a>
+    </nav>
+    <span>© 2026 Strat Studios</span>
+  </div>
+</footer>
+
+<script>
+  // Where the buttons go. Point these at the app once it's deployed (for example https://app.yourdomain.co.za).
+  const LINKS = { signup: '#pricing', signin: '#' };
+  document.querySelectorAll('[data-link]').forEach((a) => { if (LINKS[a.dataset.link]) a.href = LINKS[a.dataset.link]; });
+
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Nav: show the scroll edge only once content is underneath it.
+  const nav = document.getElementById('nav');
+  new IntersectionObserver(([entry]) => { nav.toggleAttribute('data-scrolled', !entry.isIntersecting); }).observe(document.getElementById('nav-sentinel'));
+
+  // Reconciliation demo. Explanatory motion, so it may run longer than UI motion: allocations land one at a
+  // time, then the person presses Reconcile themselves. Plays once on load; the button replays it after that.
+  const demo = document.getElementById('demo');
+  const action = document.getElementById('demo-action');
+  const hint = document.getElementById('demo-hint');
+  const meterAmount = document.getElementById('meter-amount');
+  const meterLabel = document.getElementById('meter-label');
+  let timers = [];
+  const later = (ms, fn) => timers.push(setTimeout(fn, reduceMotion ? 0 : ms));
+  function setStep(step) {
+    demo.dataset.step = step;
+    meterAmount.textContent = step >= 2 ? 'R 3 400,00 of R 3 400,00' : step === 1 ? 'R 1 150,00 of R 3 400,00' : 'R 0,00 of R 3 400,00';
+    meterLabel.textContent = step >= 2 ? 'Fully allocated' : 'Allocated';
+  }
+  function play() {
+    timers.forEach(clearTimeout); timers = [];
+    demo.removeAttribute('data-done');
+    setStep(0);
+    action.textContent = 'Reconcile';
+    action.disabled = true;
+    hint.textContent = 'One deposit, two invoices.';
+    later(500, () => setStep(1));
+    later(1100, () => { setStep(2); action.disabled = false; hint.textContent = 'Both invoices found. Ready to reconcile.'; });
+  }
+  action.addEventListener('click', () => {
+    if (demo.hasAttribute('data-done')) { play(); return; }
+    demo.setAttribute('data-done', '');
+    action.textContent = 'Replay';
+  });
+  play();
+
+  // Scroll reveal: marketing windows only, once each. Anything already on screen at load is left alone,
+  // so the page is complete at rest.
+  // Checked on scroll rather than by intersection, so a window jumped past from the nav is revealed too.
+  if (!reduceMotion) {
+    let pending = [...document.querySelectorAll('.reveal')].filter((el) => el.getBoundingClientRect().top > innerHeight);
+    pending.forEach((el) => el.setAttribute('data-hidden', ''));
+    let queued = false;
+    const check = () => {
+      queued = false;
+      pending = pending.filter((el) => {
+        if (el.getBoundingClientRect().top > innerHeight - 100) return true;
+        el.setAttribute('data-revealing', '');
+        requestAnimationFrame(() => el.removeAttribute('data-hidden'));
+        el.addEventListener('transitionend', () => el.removeAttribute('data-revealing'), { once: true });
+        return false;
+      });
+      if (!pending.length) removeEventListener('scroll', onScroll);
+    };
+    const onScroll = () => { if (!queued) { queued = true; requestAnimationFrame(check); } };
+    if (pending.length) addEventListener('scroll', onScroll, { passive: true });
+  }
+
+  // Pricing period: the pill slides, and the prices blur through the swap so the two values never read as one.
+  const period = document.getElementById('period');
+  const plans = document.getElementById('plans');
+  let swapTimer;
+  period.addEventListener('click', (event) => {
+    const button = event.target.closest('button[data-period]');
+    if (!button || period.dataset.period === button.dataset.period) return;
+    const next = button.dataset.period;
+    period.dataset.period = next;
+    period.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
+    clearTimeout(swapTimer);
+    plans.setAttribute('data-swapping', '');
+    swapTimer = setTimeout(() => {
+      plans.querySelectorAll('[data-monthly]').forEach((el) => { el.textContent = el.dataset[next]; });
+      plans.removeAttribute('data-swapping');
+    }, reduceMotion ? 0 : 120);
+  });
+</script>
+
+</body>
+</html>
